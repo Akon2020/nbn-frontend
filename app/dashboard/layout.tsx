@@ -1,0 +1,233 @@
+"use client";
+
+import type React from "react";
+
+import { useEffect, useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import Link from "next/link";
+import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { NotificationBell } from "@/components/notification-bell";
+import { GlobalSearchCommand } from "@/components/global-search-command";
+import { CartButton } from "@/components/cart-button";
+import { CartProvider } from "@/components/cart-provider";
+import {
+  Building2,
+  Home,
+  ImageIcon,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  Search,
+  Settings,
+  ShieldCheck,
+  Star,
+  Users,
+  UserRound,
+  Handshake,
+  ClipboardCheck,
+  Compass,
+  Wallet,
+  FileText,
+  Percent,
+  Bell,
+  X,
+  CalendarDays,
+  FileBarChart,
+  ListChecks,
+  ClipboardList,
+  MapPin,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import { logout } from "@/actions/auth";
+import { getAuthUser } from "@/lib/auth";
+
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [userName, setUserName] = useState("");
+  const [userRole, setUserRole] = useState("");
+
+  useEffect(() => {
+    // Affichage uniquement (nom/rôle dans la sidebar) — l'accès réel est
+    // tranché par ProtectedRoute via un appel réseau, pas par ce cache local.
+    const user = getAuthUser();
+    if (user) {
+      setUserName(user.fullName || "Utilisateur");
+      setUserRole(user.role || "");
+    }
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } finally {
+      router.push("/auth/login");
+    }
+  };
+
+  const navigation = [
+    { name: "Tableau de bord", href: "/dashboard", icon: LayoutDashboard },
+    { name: "Biens à louer", href: "/dashboard/rentals", icon: Home },
+    { name: "Biens à vendre", href: "/dashboard/sales", icon: Building2 },
+    { name: "Demandes reçues", href: "/dashboard/demandes", icon: ClipboardList },
+    { name: "Collecter un bien", href: "/collecte-bien", icon: MapPin },
+    { name: "Clients", href: "/dashboard/clients", icon: UserRound },
+    { name: "Bailleurs", href: "/dashboard/bailleurs", icon: Handshake },
+    { name: "Commissionnaires", href: "/dashboard/commissionnaires", icon: Compass },
+    { name: "Missions", href: "/dashboard/missions", icon: ClipboardCheck },
+    { name: "Tâches", href: "/dashboard/tasks", icon: ListChecks },
+    { name: "Caisses", href: "/dashboard/caisses", icon: Wallet },
+    { name: "Réquisitions", href: "/dashboard/requisitions", icon: FileText },
+    { name: "Commissions", href: "/dashboard/commissions", icon: Percent },
+    { name: "Alertes", href: "/dashboard/alertes", icon: Bell },
+    { name: "Calendrier", href: "/dashboard/calendrier", icon: CalendarDays },
+    { name: "Rapports", href: "/dashboard/rapports", icon: FileBarChart },
+    { name: "Galerie", href: "/dashboard/gallery", icon: ImageIcon },
+    { name: "Favoris", href: "/dashboard/favorites", icon: Star },
+    { name: "Recherche", href: "/dashboard/search", icon: Search },
+    { name: "Utilisateurs", href: "/dashboard/users", icon: Users },
+    { name: "Accès consultants", href: "/dashboard/access-grants", icon: ShieldCheck },
+    { name: "Paramètres", href: "/dashboard/settings", icon: Settings },
+  ];
+
+  // BACK-G02 : le catalogue de rôles ne se limite plus à admin/agent —
+  // l'autorisation réelle est tranchée par le backend (RBAC par
+  // permission), le Frontend ne fait ici que vérifier l'authentification.
+  return (
+    <ProtectedRoute>
+      <CartProvider>
+        <div className="min-h-screen bg-background">
+      {/* Mobile sidebar backdrop */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={cn(
+          "fixed left-0 top-0 z-50 h-screen w-64 transform border-r border-border bg-card transition-transform duration-300 ease-in-out lg:translate-x-0",
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
+        <div className="flex h-full flex-col">
+          {/* Logo */}
+          <div className="flex h-16 items-center justify-between border-b border-border px-4">
+            <Link href="/dashboard" className="flex items-center gap-2">
+              <Image
+                src="/nyumbani-logo.png"
+                alt="Nyumbani Express"
+                width={40}
+                height={40}
+                className="h-8 w-8"
+              />
+              <div className="flex flex-col">
+                <span className="text-sm font-bold text-foreground leading-tight">
+                  Nyumbani Express
+                </span>
+                <span className="text-xs text-muted-foreground leading-tight">
+                  Administration
+                </span>
+              </div>
+            </Link>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden"
+              onClick={() => setSidebarOpen(false)}
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
+
+          {/* User info */}
+          <div className="border-b border-border px-4 py-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground font-semibold">
+                {userName.charAt(0).toUpperCase()}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="truncate text-sm font-semibold text-foreground">
+                  {userName}
+                </p>
+                <p className="truncate text-xs text-muted-foreground capitalize">
+                  {userRole}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Navigation */}
+          <nav className="flex-1 space-y-1 overflow-y-auto p-4">
+            {navigation.map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                    isActive
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  )}
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  <item.icon className="h-5 w-5 flex-shrink-0" />
+                  <span className="truncate">{item.name}</span>
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* Logout */}
+          <div className="border-t border-border p-4">
+            <Button
+              variant="ghost"
+              className="w-full justify-start gap-3 text-muted-foreground hover:text-accent-foreground"
+              onClick={handleLogout}
+            >
+              <LogOut className="h-5 w-5" />
+              Déconnexion
+            </Button>
+          </div>
+        </div>
+      </aside>
+
+      {/* Main content */}
+      <div className="lg:pl-64">
+        {/* Top bar */}
+        <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 md:px-6">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="lg:hidden"
+            onClick={() => setSidebarOpen(true)}
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+          <div className="flex-1" />
+          <GlobalSearchCommand />
+          <CartButton />
+          <NotificationBell />
+          <ThemeToggle />
+        </header>
+
+        {/* Page content */}
+        <main className="p-4 md:p-6">{children}</main>
+      </div>
+        </div>
+      </CartProvider>
+    </ProtectedRoute>
+  );
+}
